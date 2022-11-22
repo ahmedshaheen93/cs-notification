@@ -1,0 +1,67 @@
+openapi: "3.0.1"
+info:
+  title: cs-notification
+  version: 1.0.0
+  description: This project for sending a notification.
+tags:
+  - name: notification
+paths:
+  /notifications:
+    post:
+      summary: create a notifications
+      operationId: notifyAllSubscribers
+      tags:
+        - notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationRequest'
+
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+
+
+components:
+  schemas:
+    NotificationRequest:
+      type: object
+      required:
+        - token
+        - data
+      properties:
+        token:
+          type: string
+        data:
+          type: object
+    ErrorDetails:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        date:
+          type: string
+          format: datetime
+        status:
+          type: string
+        error:
+          type: string
+        uri:
+          type: string
+        message:
+          type: string
