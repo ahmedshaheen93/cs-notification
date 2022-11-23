@@ -1,18 +1,20 @@
 package com.shaheen.csnotification.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Arrays;
 
 @Aspect
-@ControllerAdvice
-@Slf4j
+@RestControllerAdvice
 public class LoggerAdvice {
+  Logger log = LoggerFactory.getLogger(LoggerAdvice.class);
+
   @Pointcut(value = "execution(* com.shaheen.csnotification.controller..*(..))")
   public void loggerAdvicePointCuts() {
     // empty body because its a reference to point cut

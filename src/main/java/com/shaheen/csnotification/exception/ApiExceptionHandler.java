@@ -2,16 +2,17 @@ package com.shaheen.csnotification.exception;
 
 import com.shaheen.csnotification.openapi.model.ErrorDetails;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.core.Ordered;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.HttpMessageNotWritableException;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
@@ -20,7 +21,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
-@ControllerAdvice
+@Order(Ordered.HIGHEST_PRECEDENCE)
+@RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
   @ExceptionHandler(ApiException.class)
@@ -32,31 +34,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             ex.getHttpStatus(),
             ex.getHttpStatus().getReasonPhrase());
     return new ResponseEntity<>(errorDetails, ex.getHttpStatus());
-  }
-
-  @Override
-  protected ResponseEntity<Object> handleMethodArgumentNotValid(
-      MethodArgumentNotValidException ex,
-      HttpHeaders headers,
-      HttpStatus status,
-      WebRequest request) {
-    StringBuilder builder = new StringBuilder();
-    ex.getBindingResult()
-        .getFieldErrors()
-        .forEach(
-            fieldError ->
-                builder.append(
-                    String.format(
-                        "|'%s'|%s", fieldError.getField(), fieldError.getDefaultMessage())));
-
-    String error = builder.toString();
-    ErrorDetails errorDetails =
-        buildErrorDetails(
-            error,
-            request.getDescription(false),
-            HttpStatus.BAD_REQUEST,
-            HttpStatus.BAD_REQUEST.getReasonPhrase());
-    return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
   }
 
   @Override
@@ -158,6 +135,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatus.BAD_REQUEST,
             HttpStatus.BAD_REQUEST.getReasonPhrase());
     return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler({
+    org.springframework.security.core.AuthenticationException.class,
+    org.springframework.security.authentication.BadCredentialsException.class
+  })
+  public ResponseEntity<ErrorDetails> handleAuthenticationException(
+      Exception ex, WebRequest request) {
+    ErrorDetails errorDetails =
+        buildErrorDetails(
+            ex.getMessage(),
+            request.getDescription(false),
+            HttpStatus.UNAUTHORIZED,
+            HttpStatus.UNAUTHORIZED.getReasonPhrase());
+    return new ResponseEntity<>(errorDetails, HttpStatus.UNAUTHORIZED);
   }
 
   /**

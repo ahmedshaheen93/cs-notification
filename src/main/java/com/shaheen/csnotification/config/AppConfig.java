@@ -4,10 +4,10 @@ import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,7 +15,8 @@ import java.io.InputStream;
 import java.util.Base64;
 
 @Configuration
-@Slf4j
+@Import({SecurityConfig.class, LoggerAdvice.class})
+// @EnableAspectJAutoProxy
 public class AppConfig {
   @Value("${com.shaheen.fireBase.appName}")
   private String fireBaseAppName;

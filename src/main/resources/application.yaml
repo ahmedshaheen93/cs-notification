@@ -10,3 +10,9 @@ com:
     fireBase:
       appName: delivery-app
       encodedGoogleCredentials: ${DELIVERY_APP_GOOGLECREDENTIALS}
+    apiSecurity:
+      apiKeyHeader:
+        name: ${X_API_KEY_HEADER_NAME}
+        value: ${X_API_KEY_HEADER_VALUE}
+
+
