@@ -20,7 +20,7 @@ public class AppConfig {
   @Value("${com.shaheen.fireBase.appName}")
   private String fireBaseAppName;
 
-  @Value("${com.shaheen.fireBase.googleCredentials}")
+  @Value("${com.shaheen.fireBase.encodedGoogleCredentials}")
   private String encodedGoogleCredentials;
 
   @Bean
