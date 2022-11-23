@@ -5,13 +5,11 @@ import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
-import org.springframework.core.annotation.Order;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 
 import java.util.Arrays;
 
 @Aspect
-@Order(1)
 @ControllerAdvice
 @Slf4j
 public class LoggerAdvice {

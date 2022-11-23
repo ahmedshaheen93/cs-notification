@@ -32,3 +32,4 @@ build/
 ### VS Code ###
 .vscode/
 /delivery-app-account.json
+/cs-notification.log

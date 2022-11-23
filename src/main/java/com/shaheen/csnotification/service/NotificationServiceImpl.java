@@ -8,8 +8,10 @@ import com.shaheen.csnotification.exception.GeneralServerError;
 import com.shaheen.csnotification.openapi.model.NotificationRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -20,23 +22,18 @@ public class NotificationServiceImpl implements NotificationService {
   private final ObjectMapper objectMapper;
 
   @Override
-  public void notifyAllSubscribers(NotificationRequest notificationRequest) {
-    Map data = objectMapper.convertValue(notificationRequest.getData(), Map.class);
-
-    //    Notification notification =
-    //        Notification.builder().setTitle(note.getSubject()).setBody(note.getContent()).build();
-
-    Message message =
-        Message.builder()
-            .setToken(notificationRequest.getToken())
-            //            .setNotification(notification)
-            .putAllData(data)
-            .build();
-    try {
-      firebaseMessaging.send(message);
-    } catch (FirebaseMessagingException e) {
-      log.error("Error Sending Message", e);
-      throw new GeneralServerError("Failed to send notification");
+  @Async
+  public void notifyAllSubscribers(List<NotificationRequest> notificationRequests) {
+    for (NotificationRequest notificationRequest : notificationRequests) {
+      Map data = objectMapper.convertValue(notificationRequest.getData(), Map.class);
+      Message message =
+          Message.builder().setToken(notificationRequest.getToken()).putAllData(data).build();
+      try {
+        firebaseMessaging.send(message);
+      } catch (FirebaseMessagingException e) {
+        log.error("Error Sending Message", e);
+        throw new GeneralServerError("Failed to send notification");
+      }
     }
   }
 }

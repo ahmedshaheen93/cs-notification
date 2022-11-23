@@ -5,6 +5,7 @@ info:
   description: This project for sending a notification.
 tags:
   - name: notification
+
 paths:
   /notifications:
     post:
@@ -17,7 +18,8 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/NotificationRequest'
+              items:
+                $ref: '#/components/schemas/NotificationRequest'
 
       responses:
         '204':
