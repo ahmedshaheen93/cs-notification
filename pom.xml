@@ -14,7 +14,7 @@
     <name>cs-notification</name>
     <description>cs-notification</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>1.8</java.version>
         <openapi-maven-plugin.version>6.2.1</openapi-maven-plugin.version>
         <api.version>1.0.0</api.version>
         <api.contact.website>https://github.com/ahmedshaheen93</api.contact.website>
