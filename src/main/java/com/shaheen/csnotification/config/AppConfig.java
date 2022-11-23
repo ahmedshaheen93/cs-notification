@@ -9,8 +9,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.FileInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Base64;
 
 @Configuration
 @Slf4j
@@ -18,13 +20,14 @@ public class AppConfig {
   @Value("${com.shaheen.fireBase.appName}")
   private String fireBaseAppName;
 
-  @Value("${com.shaheen.fireBase.googleCredentialsFile}")
-  private String googleCredentialsFile;
+  @Value("${com.shaheen.fireBase.googleCredentials}")
+  private String encodedGoogleCredentials;
 
   @Bean
   public FirebaseMessaging firebaseMessaging() throws IOException {
-    FileInputStream serviceAccount = new FileInputStream(googleCredentialsFile);
-    GoogleCredentials googleCredentials = GoogleCredentials.fromStream(serviceAccount);
+    byte[] decoded = Base64.getDecoder().decode(encodedGoogleCredentials);
+    InputStream targetStream = new ByteArrayInputStream(decoded);
+    GoogleCredentials googleCredentials = GoogleCredentials.fromStream(targetStream);
     FirebaseOptions firebaseOptions =
         FirebaseOptions.builder().setCredentials(googleCredentials).build();
     FirebaseApp app = FirebaseApp.initializeApp(firebaseOptions, fireBaseAppName);

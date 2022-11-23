@@ -9,4 +9,4 @@ com:
   shaheen:
     fireBase:
       appName: delivery-app
-      googleCredentialsFile: delivery-app-account.json
+      encodedGoogleCredentials: ${DELIVERY_APP_GOOGLECREDENTIALS}
