@@ -48,7 +48,7 @@ public class NotificationServiceImpl implements NotificationService {
     MulticastMessage message =
         MulticastMessage.builder().putAllData(data).addAllTokens(registrationTokens).build();
     try {
-      BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
+      BatchResponse response = firebaseMessaging.sendMulticast(message);
       if (response.getFailureCount() > 0) {
         List<SendResponse> responses = response.getResponses();
         List<String> failedTokens = new ArrayList<>();
