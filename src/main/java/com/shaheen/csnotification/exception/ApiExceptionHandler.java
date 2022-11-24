@@ -1,5 +1,6 @@
 package com.shaheen.csnotification.exception;
 
+import com.google.api.client.http.HttpResponseException;
 import com.shaheen.csnotification.openapi.model.ErrorDetails;
 import org.springframework.beans.TypeMismatchException;
 import org.springframework.http.HttpHeaders;
@@ -19,7 +20,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import javax.validation.ConstraintViolationException;
 import java.time.LocalDateTime;
 
-//@Order(Ordered.HIGHEST_PRECEDENCE)
+// @Order(Ordered.HIGHEST_PRECEDENCE)
 @RestControllerAdvice
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
@@ -32,6 +33,18 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
             ex.getHttpStatus(),
             ex.getHttpStatus().getReasonPhrase());
     return new ResponseEntity<>(errorDetails, ex.getHttpStatus());
+  }
+
+  @ExceptionHandler(HttpResponseException.class)
+  public ResponseEntity<ErrorDetails> handleGoogleException(
+      HttpResponseException ex, WebRequest request) {
+    ErrorDetails errorDetails =
+        buildErrorDetails(
+            ex.getMessage(),
+            request.getDescription(false),
+            HttpStatus.valueOf(ex.getStatusCode()),
+            HttpStatus.valueOf(ex.getStatusCode()).getReasonPhrase());
+    return new ResponseEntity<>(errorDetails, HttpStatus.valueOf(ex.getStatusCode()));
   }
 
   @Override
