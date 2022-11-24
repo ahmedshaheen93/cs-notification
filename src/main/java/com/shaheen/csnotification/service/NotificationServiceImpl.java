@@ -1,29 +1,26 @@
 package com.shaheen.csnotification.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.messaging.FirebaseMessagingException;
-import com.google.firebase.messaging.Message;
-import com.shaheen.csnotification.exception.GeneralServerError;
+import com.google.firebase.messaging.*;
+import com.shaheen.csnotification.exception.NotificationException;
+import com.shaheen.csnotification.openapi.model.MultiCastNotificationRequest;
 import com.shaheen.csnotification.openapi.model.NotificationRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 @Service
 @Slf4j
+@RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
   private final FirebaseMessaging firebaseMessaging;
   private final ObjectMapper objectMapper;
-
-  @Autowired
-  public NotificationServiceImpl(FirebaseMessaging firebaseMessaging, ObjectMapper objectMapper) {
-    this.firebaseMessaging = firebaseMessaging;
-    this.objectMapper = objectMapper;
-  }
 
   @Override
   public void notifyAllSubscribers(List<NotificationRequest> notificationRequests) {
@@ -36,8 +33,42 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("Message sent successfully");
       } catch (FirebaseMessagingException e) {
         log.error("Error Sending Message", e);
-        throw new GeneralServerError("Failed to send notification");
+        throw new NotificationException(
+            "Failed to send notification", HttpStatus.valueOf(e.getHttpResponse().getStatusCode()));
       }
+    }
+  }
+
+  @Override
+  public void notifySubscribersWithSingleMessage(
+      MultiCastNotificationRequest multiCastNotificationRequest) {
+    List<String> registrationTokens = multiCastNotificationRequest.getTokens();
+    Map data = objectMapper.convertValue(multiCastNotificationRequest.getData(), Map.class);
+
+    MulticastMessage message =
+        MulticastMessage.builder().putAllData(data).addAllTokens(registrationTokens).build();
+    try {
+      BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
+      if (response.getFailureCount() > 0) {
+        List<SendResponse> responses = response.getResponses();
+        List<String> failedTokens = new ArrayList<>();
+        for (int i = 0; i < responses.size(); i++) {
+          if (!responses.get(i).isSuccessful()) {
+            // The order of responses corresponds to the order of the registration tokens.
+            failedTokens.add("" + i);
+          }
+        }
+        if (!CollectionUtils.isEmpty(failedTokens)) {
+          throw new NotificationException(
+              String.format("Failed to send notification for tokens[%s]", failedTokens.toArray()),
+              HttpStatus.MULTI_STATUS);
+        }
+      }
+
+    } catch (FirebaseMessagingException e) {
+      log.error("Error Sending Message", e);
+      throw new NotificationException(
+          "Failed to send notification", HttpStatus.valueOf(e.getHttpResponse().getStatusCode()));
     }
   }
 }

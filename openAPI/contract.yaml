@@ -36,6 +36,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorDetails'
+  /multiCastNotification:
+    post:
+      summary: send a notifications to multipule devices
+      operationId: notifySubscribersWithSingleMessage
+      tags:
+        - notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MultiCastNotificationRequest'
+
+      responses:
+        '204':
+          description: No Content
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorDetails'
 
 
 components:
@@ -48,6 +76,18 @@ components:
       properties:
         token:
           type: string
+        data:
+          type: object
+    MultiCastNotificationRequest:
+      type: object
+      required:
+        - tokens
+        - data
+      properties:
+        tokens:
+          type: array
+          items:
+            type: string
         data:
           type: object
     ErrorDetails:
