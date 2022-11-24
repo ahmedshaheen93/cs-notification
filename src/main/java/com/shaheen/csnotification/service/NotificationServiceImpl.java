@@ -24,18 +24,20 @@ public class NotificationServiceImpl implements NotificationService {
 
   @Override
   public void notifyAllSubscribers(List<NotificationRequest> notificationRequests) {
+    List<Message> messages = new ArrayList<>();
     for (NotificationRequest notificationRequest : notificationRequests) {
       Map data = objectMapper.convertValue(notificationRequest.getData(), Map.class);
       Message message =
           Message.builder().setToken(notificationRequest.getToken()).putAllData(data).build();
-      try {
-        firebaseMessaging.send(message);
-        log.info("Message sent successfully");
-      } catch (FirebaseMessagingException e) {
-        log.error("Error Sending Message", e);
-        throw new NotificationException(
-            "Failed to send notification", HttpStatus.valueOf(e.getHttpResponse().getStatusCode()));
-      }
+      messages.add(message);
+    }
+    try {
+      BatchResponse batchResponse = firebaseMessaging.sendAll(messages);
+      handleMessageSendFailed(batchResponse);
+    } catch (FirebaseMessagingException e) {
+      log.error("Error Sending Message", e);
+      throw new NotificationException(
+          "Failed to send notification", HttpStatus.valueOf(e.getHttpResponse().getStatusCode()));
     }
   }
 
@@ -49,26 +51,29 @@ public class NotificationServiceImpl implements NotificationService {
         MulticastMessage.builder().putAllData(data).addAllTokens(registrationTokens).build();
     try {
       BatchResponse response = firebaseMessaging.sendMulticast(message);
-      if (response.getFailureCount() > 0) {
-        List<SendResponse> responses = response.getResponses();
-        List<String> failedTokens = new ArrayList<>();
-        for (int i = 0; i < responses.size(); i++) {
-          if (!responses.get(i).isSuccessful()) {
-            // The order of responses corresponds to the order of the registration tokens.
-            failedTokens.add("" + i);
-          }
-        }
-        if (!CollectionUtils.isEmpty(failedTokens)) {
-          throw new NotificationException(
-              String.format("Failed to send notification for tokens[%s]", failedTokens.toArray()),
-              HttpStatus.MULTI_STATUS);
-        }
-      }
-
+      handleMessageSendFailed(response);
     } catch (FirebaseMessagingException e) {
       log.error("Error Sending Message", e);
       throw new NotificationException(
           "Failed to send notification", HttpStatus.valueOf(e.getHttpResponse().getStatusCode()));
+    }
+  }
+
+  private void handleMessageSendFailed(BatchResponse response) {
+    if (response.getFailureCount() > 0) {
+      List<SendResponse> responses = response.getResponses();
+      List<String> failedTokens = new ArrayList<>();
+      for (int i = 0; i < responses.size(); i++) {
+        if (!responses.get(i).isSuccessful()) {
+          // The order of responses corresponds to the order of the registration tokens.
+          failedTokens.add("" + i);
+        }
+      }
+      if (!CollectionUtils.isEmpty(failedTokens)) {
+        throw new NotificationException(
+            String.format("Failed to send notification for tokens[%s]", failedTokens.toArray()),
+            HttpStatus.MULTI_STATUS);
+      }
     }
   }
 }
