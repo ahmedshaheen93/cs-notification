@@ -1,12 +1,12 @@
 package com.shaheen.csnotification.config;
 
-import com.shaheen.csnotification.exception.BadCredentialsException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.annotation.Order;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -15,9 +15,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
-@Order(0)
 @Component
 public class APIKeyAuthFilter extends OncePerRequestFilter {
 
@@ -27,54 +27,26 @@ public class APIKeyAuthFilter extends OncePerRequestFilter {
   @Value("${com.shaheen.apiSecurity.apiKeyHeader.value}")
   private String principalRequestValue;
 
+  private Set<SimpleGrantedAuthority> getAuthority() {
+    Set<SimpleGrantedAuthority> authorities = new HashSet<>();
+    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
+    return authorities;
+  }
+
   @Override
   protected void doFilterInternal(
-      HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
-      throws ServletException, IOException {
+          HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+          throws ServletException, IOException {
     String apiKeyValue = request.getHeader(principalRequestHeader);
-    SecurityContext context = SecurityContextHolder.getContext();
-    Authentication authentication =
-        new Authentication() {
-          @Override
-          public Collection<? extends GrantedAuthority> getAuthorities() {
-            return null;
-          }
 
-          @Override
-          public Object getCredentials() {
-            return null;
-          }
+    if (principalRequestValue.equals(apiKeyValue) && SecurityContextHolder.getContext().getAuthentication() == null) {
 
-          @Override
-          public Object getDetails() {
-            return null;
-          }
-
-          @Override
-          public Object getPrincipal() {
-            return null;
-          }
-
-          @Override
-          public boolean isAuthenticated() {
-            return false;
-          }
-
-          @Override
-          public void setAuthenticated(boolean isAuthenticated) throws IllegalArgumentException {}
-
-          @Override
-          public String getName() {
-            return null;
-          }
-        };
-
-    if (principalRequestValue.equals(apiKeyValue)) {
-      authentication.setAuthenticated(true);
-    } else {
-      authentication.setAuthenticated(false);
-      throw new BadCredentialsException("The API key was not found or not the expected value.");
+      UserDetails userDetails = new User(principalRequestHeader, apiKeyValue, getAuthority());
+      UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+      authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+      SecurityContextHolder.getContext().setAuthentication(authentication);
     }
-    context.setAuthentication(authentication);
+
+    filterChain.doFilter(request, response);
   }
 }

@@ -19,20 +19,21 @@ public class SecurityConfig {
     this.apiKeyAuthFilter = apiKeyAuthFilter;
   }
 
+  @Autowired
+  private UnauthorizedEntryPoint unauthorizedEntryPoint;
+
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
-    httpSecurity
-        .antMatcher("/api/**")
-        .csrf()
-        .disable()
-        .sessionManagement()
-        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-        .and()
-        .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class)
-        .authorizeRequests()
-        .anyRequest()
-        .authenticated();
-
+    httpSecurity.cors().and().csrf().disable()
+            .authorizeRequests()
+            .antMatchers("/api/v1/**").hasRole("ADMIN")
+            .anyRequest().authenticated()
+            .and()
+            .exceptionHandling().authenticationEntryPoint(unauthorizedEntryPoint)
+            .and()
+            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            .and()
+            .addFilterBefore(apiKeyAuthFilter, UsernamePasswordAuthenticationFilter.class);
     return httpSecurity.build();
   }
 }
